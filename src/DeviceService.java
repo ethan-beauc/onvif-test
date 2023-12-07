@@ -1,4 +1,6 @@
-import javax.xml.soap.*;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class DeviceService extends Service {
 	private DeviceService(String deviceServiceAddress, String u, String p) {
@@ -13,33 +15,86 @@ public class DeviceService extends Service {
 		return new DeviceService(deviceServiceAddress, u, p);
 	}
 
-	private SOAPMessage getServicesMessage() throws SOAPException {
-		SOAPMessage msg = super.getBaseMessage();
-		SOAPBody body = msg.getSOAPBody();
-		SOAPElement elem = body.addChildElement("GetServices", "wsdl");
-		SOAPElement elem1 = elem.addChildElement("IncludeCapability", "wsdl");
-		elem1.addTextNode("true");
+	private Document getServicesDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
-		msg.saveChanges();
-		return msg;
+		Element getServices = doc.createElement("wsdl:GetServices");
+		body.appendChild(getServices);
+
+		Element includeCapability = doc.createElement("wsdl:IncludeCapability");
+		getServices.appendChild(includeCapability);
+		includeCapability.appendChild(doc.createTextNode("true"));
+
+		return doc;
 	}
 
-	public String getServices() throws SOAPException {
-		SOAPMessage msg = getServicesMessage();
-		return sendRequest(msg);
+	public String getServices() {
+		Document doc = getServicesDocument();
+		return sendRequestDocument(doc);
 	}
 
-	private SOAPMessage getServiceCapabilitiesMessage() throws SOAPException {
-		SOAPMessage msg = super.getBaseMessage();
-		SOAPBody body = msg.getSOAPBody();
-		SOAPElement elem = body.addChildElement("GetServiceCapabilities", "wsdl");
+	private Document getScopesDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
-		msg.saveChanges();
-		return msg;
+		Element getScopes = doc.createElement("wsdl:GetScopes");
+		body.appendChild(getScopes);
+
+		return doc;
 	}
 
-	public String getServiceCapabilities() throws SOAPException {
-		SOAPMessage msg = getServicesMessage();
-		return sendRequest(msg);
+	public String getScopes() {
+		authenticate = true;
+		Document doc = getScopesDocument();
+		return sendRequestDocument(doc);
+	}
+
+	private Document getServiceCapabilitiesDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element getServiceCapabilities = doc.createElement("wsdl:GetServiceCapabilities");
+		body.appendChild(getServiceCapabilities);
+
+		return doc;
+	}
+
+	public String getServiceCapabilities() {
+		Document doc = getServiceCapabilitiesDocument();
+		return sendRequestDocument(doc);
+	}
+
+	private Document getCapabilitiesDocument(String cat) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element getCapabilities = doc.createElement("wsdl:GetCapabilities");
+		body.appendChild(getCapabilities);
+
+		Element category = doc.createElement("wsdl:Category");
+		getCapabilities.appendChild(category);
+		category.appendChild(doc.createTextNode(cat));
+
+		return doc;
+	}
+
+	public String getCapabilities(String category) {
+		Document doc = getCapabilitiesDocument(category);
+		return sendRequestDocument(doc);
+	}
+
+	private Document getAuxiliaryCommandDocument(String command, String state) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element sendAuxiliaryCommand = doc.createElement("wsdl:SendAuxiliaryCommand");
+		body.appendChild(sendAuxiliaryCommand);
+
+		Element auxiliaryCommand = doc.createElement("wsdl:AuxiliaryCommand");
+		sendAuxiliaryCommand.appendChild(auxiliaryCommand);
+		auxiliaryCommand.appendChild(doc.createTextNode("tt:" + command + "|" + state));
+
+		return doc;
 	}
 }

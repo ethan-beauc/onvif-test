@@ -1,5 +1,6 @@
-import javax.xml.soap.*;
-import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class PTZService extends Service {
 	private PTZService(String ptzServiceAddress, String u, String p) {
@@ -14,78 +15,254 @@ public class PTZService extends Service {
 		return new PTZService(ptzServiceAddress, u, p);
 	}
 
-	private SOAPMessage getConfigurationsMessage() throws SOAPException {
-		SOAPMessage msg = getBaseMessage();
-		SOAPBody body = msg.getSOAPBody();
-		SOAPElement elem = body.addChildElement("GetConfigurations", "wsdl");
+	private Document getConfigurationsDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
-		msg.saveChanges();
-		return msg;
+		Element elem = doc.createElement("wsdl:GetConfigurations");
+		body.appendChild(elem);
+
+		return doc;
 	}
 
-	public String getConfigurations() throws SOAPException {
-		SOAPMessage msg = getConfigurationsMessage();
-		return sendRequest(msg);
+	public String getConfigurations() {
+		Document doc = getConfigurationsDocument();
+		return sendRequestDocument(doc);
 	}
 
-	private SOAPMessage getConfigurationOptionsMessage(String cToken) throws SOAPException {
-		SOAPMessage msg = getBaseMessage();
-		SOAPBody body = msg.getSOAPBody();
-		SOAPElement configurationOptions = body.addChildElement("GetConfigurationOptions", "wsdl");
-		SOAPElement configurationToken = configurationOptions.addChildElement("ConfigurationToken", "wsdl");
-		configurationToken.addTextNode(cToken);
+	private Document getConfigurationOptionsDocument(String cToken) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
-		msg.saveChanges();
-		return msg;
+		Element configOptions = doc.createElement("wsdl:GetConfigurationOptions");
+		body.appendChild(configOptions);
+
+		Element configToken = doc.createElement("wsdl:ConfigurationToken");
+		configToken.appendChild(doc.createTextNode(cToken));
+		configOptions.appendChild(configToken);
+
+		return doc;
 	}
 
-	public String getConfigurationOptions(String cToken) throws SOAPException {
-		SOAPMessage msg = getConfigurationOptionsMessage(cToken);
-		return sendRequest(msg);
+	public String getConfigurationOptions(String cToken) {
+		Document doc = getConfigurationOptionsDocument(cToken);
+		return sendRequestDocument(doc);
 	}
 
-	private SOAPMessage getContinuousMoveMessage(float xVel, float yVel) throws SOAPException {
-		SOAPMessage msg = getBaseMessage();
-		SOAPEnvelope env = msg.getSOAPPart().getEnvelope();
-		env.addNamespaceDeclaration("tt", "http://www.onvif.org/ver10/schema");
-		SOAPBody body = msg.getSOAPBody();
+	private Document getNodesDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
-		SOAPElement continuousMove = body.addChildElement("ContinuousMove", "wsdl");
-		SOAPElement profileToken = continuousMove.addChildElement("ProfileToken", "wsdl");
-		profileToken.addTextNode("Profile1");
+		Element getNodes = doc.createElement("wsdl:GetNodes");
+		body.appendChild(getNodes);
 
-		SOAPElement velocity = continuousMove.addChildElement("Velocity", "wsdl");
-		SOAPElement panTilt = velocity.addChildElement("PanTilt", "tt");
-		panTilt.addAttribute(new QName("x"), String.valueOf(xVel));
-		panTilt.addAttribute(new QName("y"), String.valueOf(yVel));
-		panTilt.addAttribute(new QName("space"), "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace");
-
-		msg.saveChanges();
-		return msg;
+		return doc;
 	}
 
-	public String continuousMove(float x, float y) throws SOAPException {
-		SOAPMessage msg = getContinuousMoveMessage(x, y);
-		return sendRequest(msg);
+	public String getNodes() {
+		Document doc = getNodesDocument();
+		return sendRequestDocument(doc);
 	}
 
-	private SOAPMessage getStopMessage() throws SOAPException {
-		SOAPMessage msg = getBaseMessage();
-		SOAPBody body = msg.getSOAPBody();
-		SOAPElement stop = body.addChildElement("Stop", "wsdl");
-		SOAPElement profileToken = stop.addChildElement("ProfileToken", "wsdl");
-		profileToken.addTextNode("Profile1");
-		SOAPElement panTilt = stop.addChildElement("PanTilt", "wsdl");
-		panTilt.addTextNode("true");
-		SOAPElement zoom = stop.addChildElement("Zoom", "wsdl");
-		zoom.addTextNode("true");
+	private Document getNodeDocument(String nToken) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
-		msg.saveChanges();
-		return msg;
+		Element getNode = doc.createElement("wsdl:GetNode");
+		body.appendChild(getNode);
+
+		Element nodeToken = doc.createElement("wsdl:NodeToken");
+		nodeToken.appendChild(doc.createTextNode(nToken));
+		getNode.appendChild(nodeToken);
+
+		return doc;
 	}
 
-	public String stop() throws SOAPException {
-		SOAPMessage msg = getStopMessage();
-		return sendRequest(msg);
+	public String getNode(String nToken) {
+		Document doc = getNodeDocument(nToken);
+		return sendRequestDocument(doc);
+	}
+
+
+	private Document getContinuousMoveDocument(float xVel, float yVel, float zVel) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element continuousMove = doc.createElement("wsdl:ContinuousMove");
+		body.appendChild(continuousMove);
+
+		Element profileToken = doc.createElement("wsdl:ProfileToken");
+		profileToken.appendChild(doc.createTextNode("Profile1"));
+		continuousMove.appendChild(profileToken);
+
+		Element velocity = doc.createElement("wsdl:Velocity");
+		continuousMove.appendChild(velocity);
+
+		Element panTilt = doc.createElement("tt:PanTilt");
+		panTilt.setAttribute("x", String.valueOf(xVel));
+		panTilt.setAttribute("y", String.valueOf(yVel));
+		panTilt.setAttribute("space", "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace");
+		velocity.appendChild(panTilt);
+
+		Element zoom = doc.createElement("tt:Zoom");
+		zoom.setAttribute("x", String.valueOf(zVel));
+		zoom.setAttribute("space", "http://www.onvif.org/ver10/tptz/ZoomSpaces/VelocityGenericSpace");
+		velocity.appendChild(zoom);
+
+		return doc;
+	}
+
+	public String continuousMove(float x, float y, float z) {
+		Document doc = getContinuousMoveDocument(x, y, z);
+		return sendRequestDocument(doc);
+	}
+
+	public Document getRelativeMoveDocument(float x, float y, float z) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element relativeMove = doc.createElement("wsdl:RelativeMove");
+		body.appendChild(relativeMove);
+
+		Element profileToken = doc.createElement("wsdl:ProfileToken");
+		profileToken.appendChild(doc.createTextNode("Profile1"));
+		relativeMove.appendChild(profileToken);
+
+		Element translation = doc.createElement("wsdl:Translation");
+		relativeMove.appendChild(translation);
+
+		Element panTilt = doc.createElement("tt:PanTilt");
+		panTilt.setAttribute("x", String.valueOf(x));
+		panTilt.setAttribute("y", String.valueOf(y));
+		panTilt.setAttribute("space", "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace");
+		translation.appendChild(panTilt);
+
+		Element zoom = doc.createElement("tt:Zoom");
+		zoom.setAttribute("x", String.valueOf(z));
+		zoom.setAttribute("space", "http://www.onvif.org/ver10/tptz/ZoomSpaces/VelocityGenericSpace");
+		translation.appendChild(zoom);
+
+		return doc;
+	}
+
+	public String relativeMove(float x, float y, float z) {
+		Document doc = getRelativeMoveDocument(x, y, z);
+		return sendRequestDocument(doc);
+	}
+
+	private Document getPresetsDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element getPresetsElement = doc.createElement("wsdl:GetPresets");
+		body.appendChild(getPresetsElement);
+
+		Element profileToken = doc.createElement("wsdl:ProfileToken");
+		profileToken.appendChild(doc.createTextNode("Profile1"));
+		getPresetsElement.appendChild(profileToken);
+
+		return doc;
+	}
+
+	public String getPresets() {
+		Document doc = getPresetsDocument();
+		return sendRequestDocument(doc);
+	}
+
+	private Document gotoPresetDocument(String pToken) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element gotoPresetElement = doc.createElement("wsdl:GotoPreset");
+		body.appendChild(gotoPresetElement);
+
+		Element profileToken = doc.createElement("wsdl:ProfileToken");
+		profileToken.appendChild(doc.createTextNode("Profile1"));
+		gotoPresetElement.appendChild(profileToken);
+
+		Element presetToken = doc.createElement("wsdl:PresetToken");
+		presetToken.appendChild(doc.createTextNode(pToken));
+		gotoPresetElement.appendChild(presetToken);
+
+		return doc;
+	}
+
+	public String gotoPreset(String pToken) {
+		Document doc = gotoPresetDocument(pToken);
+		return sendRequestDocument(doc);
+	}
+
+	private Document setPresetDocument(String pToken) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element setPresetElement = doc.createElement("wsdl:SetPreset");
+		body.appendChild(setPresetElement);
+
+		Element profileToken = doc.createElement("wsdl:ProfileToken");
+		profileToken.appendChild(doc.createTextNode("Profile1"));
+		setPresetElement.appendChild(profileToken);
+
+		Element presetToken = doc.createElement("wsdl:PresetToken");
+		presetToken.appendChild(doc.createTextNode(pToken));
+		setPresetElement.appendChild(presetToken);
+
+		return doc;
+	}
+
+	public String setPreset(String pToken) {
+		Document doc = setPresetDocument(pToken);
+		return sendRequestDocument(doc);
+	}
+
+	private Document getStopDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element stop = doc.createElement("wsdl:Stop");
+		body.appendChild(stop);
+
+		Element profileToken = doc.createElement("wsdl:ProfileToken");
+		profileToken.appendChild(doc.createTextNode("Profile1"));
+		stop.appendChild(profileToken);
+
+		Element panTilt = doc.createElement("wsdl:PanTilt");
+		panTilt.appendChild(doc.createTextNode("true"));
+		stop.appendChild(panTilt);
+
+		Element zoom = doc.createElement("wsdl:Zoom");
+		zoom.appendChild(doc.createTextNode("true"));
+		stop.appendChild(zoom);
+
+		return doc;
+	}
+
+	public String stop() {
+		Document doc = getStopDocument();
+		return sendRequestDocument(doc);
+	}
+
+	private Document getAuxiliaryCommandDocument(String command, String state) {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element sendAuxiliaryCommand = doc.createElement("wsdl:SendAuxiliaryCommand");
+		body.appendChild(sendAuxiliaryCommand);
+
+		Element profileToken = doc.createElement("wsdl:ProfileToken");
+		profileToken.appendChild(doc.createTextNode("Profile1"));
+		sendAuxiliaryCommand.appendChild(profileToken);
+
+		Element auxiliaryData = doc.createElement("wsdl:AuxiliaryData");
+		auxiliaryData.appendChild(doc.createTextNode("tt:" + command + "|" + state));
+		sendAuxiliaryCommand.appendChild(auxiliaryData);
+
+		return doc;
+	}
+
+	public String setWiper(String state) {
+		authenticate = true;
+		Document doc = getAuxiliaryCommandDocument("Wiper", state);
+		return sendRequestDocument(doc);
 	}
 }

@@ -1,4 +1,6 @@
-import javax.xml.soap.*;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class MediaService extends Service {
 	private MediaService(String mediaServiceAddress, String u, String p) {
@@ -13,17 +15,33 @@ public class MediaService extends Service {
 		return new MediaService(mediaServiceAddress, u, p);
 	}
 
-	private SOAPMessage getProfilesMessage() throws SOAPException {
-		SOAPMessage msg = super.getBaseMessage();
-		SOAPBody body = msg.getSOAPBody();
-		SOAPElement getProfiles = body.addChildElement("GetProfiles", "wsdl");
+	private Document getProfilesDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
-		msg.saveChanges();
-		return msg;
+		Element getProfiles = doc.createElement("wsdl:GetProfiles");
+		body.appendChild(getProfiles);
+
+		return doc;
 	}
 
-	public String getProfiles() throws SOAPException {
-		SOAPMessage msg = getProfilesMessage();
-		return sendRequest(msg);
+	public String getProfiles() {
+		Document doc = getProfilesDocument();
+		return sendRequestDocument(doc);
+	}
+
+	private Document getVideoSourcesDocument() {
+		Document doc = getBaseDocument();
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+
+		Element getVideoSources = doc.createElement("wsdl:GetVideoSources");
+		body.appendChild(getVideoSources);
+
+		return doc;
+	}
+
+	public String getVideoSources() {
+		Document doc = getVideoSourcesDocument();
+		return sendRequestDocument(doc);
 	}
 }
