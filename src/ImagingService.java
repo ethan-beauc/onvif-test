@@ -1,9 +1,30 @@
+/*
+ * IRIS -- Intelligent Roadway Information System
+ * Copyright (C) 2016-2023  Minnesota Department of Transportation
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+package us.mn.state.dot.tms.server.comm.onvifptz.lib;
+
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/**
+ * Service for ONVIF imaging messages
+ *
+ * @author Ethan Beauclaire
+ */
 public class ImagingService extends Service {
-	private ImagingService(String imagingServiceAddress, String u, String p) {
+	public ImagingService(String imagingServiceAddress, String u, String p) {
 		endpoint = imagingServiceAddress;
 		namespace = "http://www.onvif.org/ver20/imaging/wsdl";
 		username = u;
@@ -15,7 +36,7 @@ public class ImagingService extends Service {
 		return new ImagingService(imagingServiceAddress, u, p);
 	}
 
-	private Document getOptionsDocument(String vToken) {
+	public Document getOptionsDocument(String vToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -34,7 +55,7 @@ public class ImagingService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getImagingSettingsDocument(String vToken) {
+	public Document getImagingSettingsDocument(String vToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -53,7 +74,7 @@ public class ImagingService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document setImagingSettingsDocument(String vToken, String setting, String value) {
+	public Document setImagingSettingsDocument(String vToken, String setting, String value) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -131,7 +152,7 @@ public class ImagingService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getMoveOptionsDocument(String vToken) {
+	public Document getMoveOptionsDocument(String vToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -150,11 +171,11 @@ public class ImagingService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getMoveDocument(String vToken, float distance) {
+	public Document getMoveDocument(String vToken, float distance) {
 		return getMoveDocument(vToken, distance, "");
 	}
 
-	private Document getMoveDocument(String vToken, float distance, String mode) {
+	public Document getMoveDocument(String vToken, float distance, String mode) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -204,7 +225,7 @@ public class ImagingService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getStatusDocument(String vToken) {
+	public Document getStatusDocument(String vToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -223,7 +244,7 @@ public class ImagingService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getStopDocument(String vToken) {
+	public Document getStopDocument(String vToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 

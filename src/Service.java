@@ -1,3 +1,19 @@
+/*
+ * IRIS -- Intelligent Roadway Information System
+ * Copyright (C) 2016-2023  Minnesota Department of Transportation
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+package us.mn.state.dot.tms.server.comm.onvifptz.lib;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.*;
@@ -23,6 +39,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/**
+ * Default Service class for ONVIF messages.
+ * Handles building base messages, adding security headers, and sending requests
+ *
+ * @author Ethan Beauclaire
+ */
 public abstract class Service {
 	protected String endpoint;
 	protected String namespace;
@@ -123,7 +145,7 @@ public abstract class Service {
 		return doc;
 	}
 
-	protected String sendRequestDocument(Document doc) {
+	public String sendRequestDocument(Document doc) {
 		String resp = "";
 		try {
 			URL url = new URL(endpoint);

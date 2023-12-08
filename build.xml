@@ -30,7 +30,7 @@
 		 basedir="${build}">
 	  <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
       <manifest>
-        <attribute name="Main-Class" value="ONVIFTest"/>
+        <attribute name="Main-Class" value="us.mn.state.dot.tms.server.comm.onvifptz.lib.ONVIFTest"/>
 		<attribute name="Class-Path" value="${classpath}"/>
       </manifest>
     </jar>

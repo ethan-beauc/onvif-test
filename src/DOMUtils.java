@@ -12,8 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-//TODO: uncomment in iris
-//package us.mn.state.dot.tms.server.comm.onvifptz.lib;
+package us.mn.state.dot.tms.server.comm.onvifptz.lib;
 
 import java.io.*;
 import javax.xml.transform.*;
@@ -22,12 +21,19 @@ import javax.xml.transform.stream.*;
 
 import org.w3c.dom.Node;
 
+/**
+ * Class for XML document utilities
+ *
+ * @author Ethan Beauclaire
+ */
 public class DOMUtils {
 	/** don't allow instantiation */
 	private DOMUtils() {}
 
 	/** Converts the Node to a string and returns it */
 	public static String getString(Node n) {
+		if (n == null) return null;
+
 		try {
 			StringWriter w = new StringWriter();
 

@@ -1,9 +1,30 @@
+/*
+ * IRIS -- Intelligent Roadway Information System
+ * Copyright (C) 2016-2023  Minnesota Department of Transportation
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+package us.mn.state.dot.tms.server.comm.onvifptz.lib;
+
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/**
+ * Service for ONVIF PTZ messages
+ *
+ * @author Ethan Beauclaire
+ */
 public class PTZService extends Service {
-	private PTZService(String ptzServiceAddress, String u, String p) {
+	public PTZService(String ptzServiceAddress, String u, String p) {
 		endpoint = ptzServiceAddress;
 		namespace = "http://www.onvif.org/ver20/ptz/wsdl";
 		username = u;
@@ -15,7 +36,7 @@ public class PTZService extends Service {
 		return new PTZService(ptzServiceAddress, u, p);
 	}
 
-	private Document getConfigurationsDocument() {
+	public Document getConfigurationsDocument() {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -30,7 +51,7 @@ public class PTZService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getConfigurationOptionsDocument(String cToken) {
+	public Document getConfigurationOptionsDocument(String cToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -49,7 +70,7 @@ public class PTZService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getNodesDocument() {
+	public Document getNodesDocument() {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -64,7 +85,7 @@ public class PTZService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getNodeDocument(String nToken) {
+	public Document getNodeDocument(String nToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -84,7 +105,7 @@ public class PTZService extends Service {
 	}
 
 
-	private Document getContinuousMoveDocument(float xVel, float yVel, float zVel) {
+	public Document getContinuousMoveDocument(float xVel, float yVel, float zVel) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -150,7 +171,7 @@ public class PTZService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getPresetsDocument() {
+	public Document getPresetsDocument() {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -169,7 +190,7 @@ public class PTZService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document gotoPresetDocument(String pToken) {
+	public Document gotoPresetDocument(String pToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -192,7 +213,7 @@ public class PTZService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document setPresetDocument(String pToken) {
+	public Document setPresetDocument(String pToken) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -215,7 +236,7 @@ public class PTZService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getStopDocument() {
+	public Document getStopDocument() {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -242,7 +263,7 @@ public class PTZService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getAuxiliaryCommandDocument(String command, String state) {
+	public Document getAuxiliaryCommandDocument(String command, String state) {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 

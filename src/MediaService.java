@@ -1,9 +1,30 @@
+/*
+ * IRIS -- Intelligent Roadway Information System
+ * Copyright (C) 2016-2023  Minnesota Department of Transportation
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+package us.mn.state.dot.tms.server.comm.onvifptz.lib;
+
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/**
+ * Service for ONVIF media messages
+ *
+ * @author Ethan Beauclaire
+ */
 public class MediaService extends Service {
-	private MediaService(String mediaServiceAddress, String u, String p) {
+	public MediaService(String mediaServiceAddress, String u, String p) {
 		endpoint = mediaServiceAddress;
 		namespace = "http://www.onvif.org/ver10/media/wsdl";
 		username = u;
@@ -15,7 +36,7 @@ public class MediaService extends Service {
 		return new MediaService(mediaServiceAddress, u, p);
 	}
 
-	private Document getProfilesDocument() {
+	public Document getProfilesDocument() {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
@@ -30,7 +51,7 @@ public class MediaService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	private Document getVideoSourcesDocument() {
+	public Document getVideoSourcesDocument() {
 		Document doc = getBaseDocument();
 		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
