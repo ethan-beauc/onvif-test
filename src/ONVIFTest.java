@@ -60,7 +60,6 @@ public class ONVIFTest {
 
 		//System.out.println("\nServices: \n" + deviceService.getServices() + "\n");
 		//System.out.println("\nServiceCapabilities: \n" + deviceService.getServiceCapabilities() + "\n");
-		System.out.println("\nCapabilities: \n" + deviceService.getCapabilities("All") + "\n");
 
 		//System.out.println("\nMedia Profiles: \n" + mediaService.getProfiles() + "\n");
 		System.out.println("\nVideo sources:\n" + mediaService.getVideoSources() + "\n");
