@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-package us.mn.state.dot.tms.server.comm.onvifptz.lib;
+package us.mn.state.dot.tms.server.comm.onvifptz;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -25,6 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 import java.util.Base64;
 import java.util.Date;
+import java.util.stream.Collectors;
 import java.util.TimeZone;
 import java.text.SimpleDateFormat;
 
@@ -50,7 +51,12 @@ public abstract class Service {
 	protected String namespace;
 	protected String username;
 	protected String password;
-	protected boolean authenticate;
+
+	/** Logger method */
+	protected void log(String s) {
+		//OnvifPTZPoller.slog("PTZCommandProp:" + s);
+		System.out.println(s);
+	}
 
 	/**
 	 * Get the base document that all other services add to; creates the header
@@ -68,14 +74,15 @@ public abstract class Service {
 
 		Document d = db.newDocument();
 		d.setXmlStandalone(true);
-		Element envelope = d.createElementNS("http://schemas.xmlsoap.org/soap/envelope/", "SOAP-ENV:Envelope");
+		Element envelope = d.createElementNS("http://www.w3.org/2003/05/soap-envelope", "s:Envelope");
+		//Element envelope = d.createElementNS("http://schemas.xmlsoap.org/soap/envelope/", "s:Envelope");
 		envelope.setAttribute("xmlns:wsdl", namespace);
 		envelope.setAttribute("xmlns:tt", "http://www.onvif.org/ver10/schema");
 		d.appendChild(envelope);
-		Element header = d.createElement("SOAP-ENV:Header");
+		Element header = d.createElement("s:Header");
 		envelope.appendChild(header);
 
-		Element body = d.createElement("SOAP-ENV:Body");
+		Element body = d.createElement("s:Body");
 		envelope.appendChild(body);
 
 		return d;
@@ -107,25 +114,33 @@ public abstract class Service {
 	 * @param doc the document for which to add headers
 	 */
 	protected Document addSecurityHeaderDocument(Document doc) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		Element env = (Element) doc.getElementsByTagName("SOAP-ENV:Envelope").item(0);
-		env.setAttribute("xmlns:wsse",
-			"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd");
-		env.setAttribute("xmlns:wsu",
-			"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd");
+		Element env = (Element) doc.getElementsByTagName("s:Envelope").item(0);
+		//env.setAttribute("xmlns:wsse",
+		//	"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd");
+		//env.setAttribute("xmlns:wsu",
+		//	"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd");
 
-		Element head = (Element) env.getElementsByTagName("SOAP-ENV:Header").item(0);
-		Element sec = doc.createElement("wsse:Security");
+		Element head = (Element) env.getElementsByTagName("s:Header").item(0);
+		//Element sec = doc.createElement("wsse:Security");
+		Element sec = doc.createElement("Security");
+		sec.setAttribute("xmlns", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd");
 		head.appendChild(sec);
-		Element usernameToken = doc.createElement("wsse:UsernameToken");
+		//Element usernameToken = doc.createElement("wsse:UsernameToken");
+		Element usernameToken = doc.createElement("UsernameToken");
 		sec.appendChild(usernameToken);
-		Element usernameElement = doc.createElement("wsse:Username");
+		//Element usernameElement = doc.createElement("wsse:Username");
+		Element usernameElement = doc.createElement("Username");
 		usernameElement.appendChild(doc.createTextNode(username));
 		usernameToken.appendChild(usernameElement);
-		Element passwordElement = doc.createElement("wsse:Password");
+		//Element passwordElement = doc.createElement("wsse:Password");
+		Element passwordElement = doc.createElement("Password");
 		usernameToken.appendChild(passwordElement);
-		Element nonce = doc.createElement("wsse:Nonce");
+		Element nonce = doc.createElement("Nonce");
+		nonce.setAttribute("EncodingType", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary");
 		usernameToken.appendChild(nonce);
-		Element created = doc.createElement("wsu:Created");
+		//Element created = doc.createElement("wsu:Created");
+		Element created = doc.createElement("Created");
+		created.setAttribute("xmlns", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd");
 		usernameToken.appendChild(created);
 
 		// Generate and encode nonce, inserting it into the Nonce element
@@ -169,14 +184,14 @@ public abstract class Service {
 			connection.setDoOutput(true);
 			connection.setRequestProperty("Content-Type", "application/soap+xml; charset=utf-8");
 
-			if (authenticate && !"".equals(username)) {
+			if (!"".equals(username)) {
 				addSecurityHeaderDocument(doc);
 			} else {
-				System.out.println("Sending unauthenticated request...");
+				log("Sending unauthenticated request...");
 			}
 
 			String soapRequest = DOMUtils.getString(doc);
-			System.out.println("Final SOAP request:\n" + soapRequest);
+			log("\nSending soapRequest to " + endpoint + ":\n" + soapRequest);
 
 			try (OutputStream os = connection.getOutputStream()) {
 				byte[] input = soapRequest.getBytes("utf-8");
@@ -196,7 +211,11 @@ public abstract class Service {
 					resp = response.toString();
 				}
 			} else {
-				resp = "Request failed. Response code: " + responseCode;
+				resp = "Request failed. Response code: " + responseCode + "\n";
+				InputStream errStream = connection.getErrorStream();
+				String r = new BufferedReader(new InputStreamReader(errStream)).lines().collect(Collectors.joining("\n"));
+
+				resp = resp + r;
 			}
 
 			connection.disconnect();

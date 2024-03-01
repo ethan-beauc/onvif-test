@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-package us.mn.state.dot.tms.server.comm.onvifptz.lib;
+package us.mn.state.dot.tms.server.comm.onvifptz;
 
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
@@ -29,7 +29,6 @@ public class ImagingService extends Service {
 		namespace = "http://www.onvif.org/ver20/imaging/wsdl";
 		username = u;
 		password = p;
-		authenticate = true;
 	}
 
 	public static ImagingService getImagingService(String imagingServiceAddress, String u, String p) {
@@ -39,7 +38,7 @@ public class ImagingService extends Service {
 	/** Document builder function for GetOptions */
 	public Document getOptionsDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element getOptions = doc.createElement("wsdl:GetOptions");
 		body.appendChild(getOptions);
@@ -64,7 +63,7 @@ public class ImagingService extends Service {
 	/** Document builder function for GetImagingSettings */
 	public Document getImagingSettingsDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element getImagingSettings = doc.createElement("wsdl:GetImagingSettings");
 		body.appendChild(getImagingSettings);
@@ -92,7 +91,7 @@ public class ImagingService extends Service {
 	 */
 	public Document setImagingSettingsDocument(String vToken, String setting, String value) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element setImagingSettings = doc.createElement("wsdl:SetImagingSettings");
 		body.appendChild(setImagingSettings);
@@ -176,10 +175,37 @@ public class ImagingService extends Service {
 		return sendRequestDocument(doc);
 	}
 
+	/**
+	 * Gets the iris attenuation
+	 *
+	 * @param vToken reference token to the relevant video source
+	 *
+	 * @return float value of iris
+	 */
+	public float getIris(String vToken) {
+		String docString = getImagingSettings(vToken);
+		Document doc = DOMUtils.getDocument(docString);
+		if (doc == null) return 0;
+
+		Element iris = (Element) doc.getElementsByTagName("tt:Iris").item(0);
+		return Float.parseFloat(iris.getTextContent());
+	}
+
+	/**
+	 * Increments the iris attenuation by retrieving and setting it (absolute)
+	 *
+	 * @param vToken reference token to the relevant video source
+	 * @param value  the requested iris attenuation; "auto", "manual", or a float
+	 */
+	public String incrementIris(String vToken, String value) {
+		float newIris = getIris(vToken) + Float.parseFloat(value);
+		return setIris(vToken, String.valueOf(newIris));
+	}
+
 	/** Document builder function for GetMoveOptions */
 	public Document getMoveOptionsDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element getMoveOptions = doc.createElement("wsdl:GetMoveOptions");
 		body.appendChild(getMoveOptions);
@@ -201,15 +227,10 @@ public class ImagingService extends Service {
 		return sendRequestDocument(doc);
 	}
 
-	/** Document builder function for Move request; uses default mode (relative). */
-	public Document getMoveDocument(String vToken, float distance) {
-		return getMoveDocument(vToken, distance, "");
-	}
-
 	/** Document builder function for Move request; takes move mode as a parameter. */
 	public Document getMoveDocument(String vToken, float distance, String mode) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element moveElement = doc.createElement("wsdl:Move");
 		body.appendChild(moveElement);
@@ -257,16 +278,27 @@ public class ImagingService extends Service {
 	 *
 	 * @param vToken   reference token to the relevant video source
 	 * @param distance the requested move distance
+	 * @param mode     mode to send to device ("continuous", "absolute", "relative")
+	 */
+	public String moveFocus(String vToken, float distance, String mode) {
+		Document doc = getMoveDocument(vToken, distance, mode);
+		return sendRequestDocument(doc);
+	}
+
+	/**
+	 * Moves the focus lens
+	 *
+	 * @param vToken   reference token to the relevant video source
+	 * @param distance the requested move distance
 	 */
 	public String moveFocus(String vToken, float distance) {
-		Document doc = getMoveDocument(vToken, distance);
-		return sendRequestDocument(doc);
+		return moveFocus(vToken, distance, "continuous");
 	}
 
 	/** Document builder function for GetStatus */
 	public Document getStatusDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element getStatusElement = doc.createElement("wsdl:GetStatus");
 		body.appendChild(getStatusElement);
@@ -291,7 +323,7 @@ public class ImagingService extends Service {
 	/** Document builder function for Stop */
 	public Document getStopDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element stopElement = doc.createElement("wsdl:Stop");
 		body.appendChild(stopElement);

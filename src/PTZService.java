@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-package us.mn.state.dot.tms.server.comm.onvifptz.lib;
+package us.mn.state.dot.tms.server.comm.onvifptz;
 
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
@@ -29,7 +29,6 @@ public class PTZService extends Service {
 		namespace = "http://www.onvif.org/ver20/ptz/wsdl";
 		username = u;
 		password = p;
-		authenticate = true;
 	}
 
 	public static PTZService getPTZService(String ptzServiceAddress, String u, String p) {
@@ -39,7 +38,7 @@ public class PTZService extends Service {
 	/** Document builder function for GetConfigurations */
 	public Document getConfigurationsDocument() {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element elem = doc.createElement("wsdl:GetConfigurations");
 		body.appendChild(elem);
@@ -56,7 +55,7 @@ public class PTZService extends Service {
 	/** Document builder function for GetConfigurationOptions */
 	public Document getConfigurationOptionsDocument(String cToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element configOptions = doc.createElement("wsdl:GetConfigurationOptions");
 		body.appendChild(configOptions);
@@ -82,7 +81,7 @@ public class PTZService extends Service {
 	/** Document builder function for GetNodes */
 	public Document getNodesDocument() {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element getNodes = doc.createElement("wsdl:GetNodes");
 		body.appendChild(getNodes);
@@ -99,7 +98,7 @@ public class PTZService extends Service {
 	/** Document builder function for GetNode */
 	public Document getNodeDocument(String nToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element getNode = doc.createElement("wsdl:GetNode");
 		body.appendChild(getNode);
@@ -122,15 +121,15 @@ public class PTZService extends Service {
 	}
 
 	/** Document builder function for ContinuousMove */
-	public Document getContinuousMoveDocument(float xVel, float yVel, float zVel) {
+	public Document getContinuousMoveDocument(String profile, float xVel, float yVel, float zVel) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element continuousMove = doc.createElement("wsdl:ContinuousMove");
 		body.appendChild(continuousMove);
 
 		Element profileToken = doc.createElement("wsdl:ProfileToken");
-		profileToken.appendChild(doc.createTextNode("Profile1"));
+		profileToken.appendChild(doc.createTextNode(profile));
 		continuousMove.appendChild(profileToken);
 
 		Element velocity = doc.createElement("wsdl:Velocity");
@@ -153,25 +152,26 @@ public class PTZService extends Service {
 	/**
 	 * Sends a continuous move operation to the PTZ node; currently uses hard-coded MediaProfile token
 	 *
-	 * @param x the x value (pan speed) of the move [-1.0, 1.0]
-	 * @param y the y value (tilt speed) of the move [-1.0, 1.0]
-	 * @param z the zoom speed of the move [-1.0, 1.0]
+	 * @param profile the profile to send the operation to
+	 * @param x       the x value (pan speed) of the move [-1.0, 1.0]
+	 * @param y       the y value (tilt speed) of the move [-1.0, 1.0]
+	 * @param z       the zoom speed of the move [-1.0, 1.0]
 	 */
-	public String continuousMove(float x, float y, float z) {
-		Document doc = getContinuousMoveDocument(x, y, z);
+	public String continuousMove(String profile, float x, float y, float z) {
+		Document doc = getContinuousMoveDocument(profile, x, y, z);
 		return sendRequestDocument(doc);
 	}
 
 	/** Document builder function for RelativeMove */
-	public Document getRelativeMoveDocument(float x, float y, float z) {
+	public Document getRelativeMoveDocument(String profile, float x, float y, float z) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element relativeMove = doc.createElement("wsdl:RelativeMove");
 		body.appendChild(relativeMove);
 
 		Element profileToken = doc.createElement("wsdl:ProfileToken");
-		profileToken.appendChild(doc.createTextNode("Profile1"));
+		profileToken.appendChild(doc.createTextNode(profile));
 		relativeMove.appendChild(profileToken);
 
 		Element translation = doc.createElement("wsdl:Translation");
@@ -198,21 +198,21 @@ public class PTZService extends Service {
 	 * @param y the y value (tilt) of the move [-1.0, 1.0]
 	 * @param z the zoom of the move [-1.0, 1.0]
 	 */
-	public String relativeMove(float x, float y, float z) {
-		Document doc = getRelativeMoveDocument(x, y, z);
+	public String relativeMove(String profile, float x, float y, float z) {
+		Document doc = getRelativeMoveDocument(profile, x, y, z);
 		return sendRequestDocument(doc);
 	}
 
 	/** Document builder function for GetPresets */
-	public Document getPresetsDocument() {
+	public Document getPresetsDocument(String profile) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element getPresetsElement = doc.createElement("wsdl:GetPresets");
 		body.appendChild(getPresetsElement);
 
 		Element profileToken = doc.createElement("wsdl:ProfileToken");
-		profileToken.appendChild(doc.createTextNode("Profile1"));
+		profileToken.appendChild(doc.createTextNode(profile));
 		getPresetsElement.appendChild(profileToken);
 
 		return doc;
@@ -222,21 +222,21 @@ public class PTZService extends Service {
 	 * Gets the list of PTZ presets for the PTZNode of the selected
 	 * MediaProfile; currently uses hardcoded profile token.
 	 */
-	public String getPresets() {
-		Document doc = getPresetsDocument();
+	public String getPresets(String profile) {
+		Document doc = getPresetsDocument(profile);
 		return sendRequestDocument(doc);
 	}
 
 	/** Document builder function for GotoPreset */
-	public Document gotoPresetDocument(String pToken) {
+	public Document gotoPresetDocument(String profToken, String pToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element gotoPresetElement = doc.createElement("wsdl:GotoPreset");
 		body.appendChild(gotoPresetElement);
 
 		Element profileToken = doc.createElement("wsdl:ProfileToken");
-		profileToken.appendChild(doc.createTextNode("Profile1"));
+		profileToken.appendChild(doc.createTextNode(profToken));
 		gotoPresetElement.appendChild(profileToken);
 
 		Element presetToken = doc.createElement("wsdl:PresetToken");
@@ -248,25 +248,26 @@ public class PTZService extends Service {
 
 	/**
 	 * Point the camera in a saved preset direction for the PTZNode of
-	 * selected MediaProfile; currently uses hardcoded profile token.
+	 * selected MediaProfile
 	 *
-	 * @param pToken reference token to the saved PTZ preset
+	 * @param profileToken reference to the media profile
+	 * @param pToken       reference token to the saved PTZ preset
 	 */
-	public String gotoPreset(String pToken) {
-		Document doc = gotoPresetDocument(pToken);
+	public String gotoPreset(String profileToken, String pToken) {
+		Document doc = gotoPresetDocument(profileToken, pToken);
 		return sendRequestDocument(doc);
 	}
 
 	/** Document builder function for SetPreset */
-	public Document setPresetDocument(String pToken) {
+	public Document setPresetDocument(String profToken, String pToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element setPresetElement = doc.createElement("wsdl:SetPreset");
 		body.appendChild(setPresetElement);
 
 		Element profileToken = doc.createElement("wsdl:ProfileToken");
-		profileToken.appendChild(doc.createTextNode("Profile1"));
+		profileToken.appendChild(doc.createTextNode(profToken));
 		setPresetElement.appendChild(profileToken);
 
 		Element presetToken = doc.createElement("wsdl:PresetToken");
@@ -277,28 +278,28 @@ public class PTZService extends Service {
 	}
 
 	/**
-	 * Saves the current position to a preset; currently uses hardcoded
-	 * MediaProfile token.
+	 * Saves the current position to a preset
 	 *
 	 * Calling this will overwrite if an existing preset has a matching token.
 	 *
-	 * @param pToken unique reference token for the PTZ preset
+	 * @param profileToken reference to the media profile
+	 * @param pToken       unique reference token for the PTZ preset
 	 */
-	public String setPreset(String pToken) {
-		Document doc = setPresetDocument(pToken);
+	public String setPreset(String profileToken, String pToken) {
+		Document doc = setPresetDocument(profileToken, pToken);
 		return sendRequestDocument(doc);
 	}
 
 	/** Document builder function for Stop */
-	public Document getStopDocument() {
+	public Document getStopDocument(String profile) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element stop = doc.createElement("wsdl:Stop");
 		body.appendChild(stop);
 
 		Element profileToken = doc.createElement("wsdl:ProfileToken");
-		profileToken.appendChild(doc.createTextNode("Profile1"));
+		profileToken.appendChild(doc.createTextNode(profile));
 		stop.appendChild(profileToken);
 
 		Element panTilt = doc.createElement("wsdl:PanTilt");
@@ -313,8 +314,8 @@ public class PTZService extends Service {
 	}
 
 	/** Stops all ongoing PTZ movements */
-	public String stop() {
-		Document doc = getStopDocument();
+	public String stop(String profile) {
+		Document doc = getStopDocument(profile);
 		return sendRequestDocument(doc);
 	}
 
@@ -323,15 +324,15 @@ public class PTZService extends Service {
 	 *
 	 * Relevant for wiper and other extra functions
 	 */
-	public Document getAuxiliaryCommandDocument(String command, String state) {
+	public Document getAuxiliaryCommandDocument(String profToken, String command, String state) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
 
 		Element sendAuxiliaryCommand = doc.createElement("wsdl:SendAuxiliaryCommand");
 		body.appendChild(sendAuxiliaryCommand);
 
 		Element profileToken = doc.createElement("wsdl:ProfileToken");
-		profileToken.appendChild(doc.createTextNode("Profile1"));
+		profileToken.appendChild(doc.createTextNode(profToken));
 		sendAuxiliaryCommand.appendChild(profileToken);
 
 		Element auxiliaryData = doc.createElement("wsdl:AuxiliaryData");
@@ -344,11 +345,20 @@ public class PTZService extends Service {
 	/**
 	 * Calls SendAuxiliaryCommand, setting the wiper value
 	 *
-	 * @param state the requested state ("On", "Off") of the wiper
+	 * @param profileToken reference to the media profile
+	 * @param state        the requested state ("On", "Off") of the wiper
 	 */
-	public String setWiper(String state) {
-		authenticate = true;
-		Document doc = getAuxiliaryCommandDocument("Wiper", state);
+	public String setWiper(String profileToken, String state) {
+		Document doc = getAuxiliaryCommandDocument(profileToken, "Wiper", state);
 		return sendRequestDocument(doc);
+	}
+
+	/**
+	 * Sets the wiper on and off immediately to emulate a single wiper action
+	 */
+	public String wiperOneshot(String profileToken) {
+		String onResponse = setWiper(profileToken, "On");
+		String offResponse = setWiper(profileToken, "Off");
+		return onResponse + offResponse;
 	}
 }
