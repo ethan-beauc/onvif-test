@@ -4,12 +4,6 @@
   <property name="build" location="build"/>
   <property name="dist" location="dist"/>
   <property name="etc" location="etc"/>
-  <property name="lib.dir" location="lib"/>
-  <path id="classpath">
-    <fileset dir="${lib.dir}">
-      <include name="**/*.jar"/>
-    </fileset>
-  </path>
 
   <target name="init">
     <tstamp/>
@@ -18,8 +12,7 @@
 
   <target name="compile" depends="init"
   	  description="compile source">
-	<javac srcdir="${src}" destdir="${build}">
-	  <classpath refid="classpath"/>
+	<javac target="1.8" srcdir="${src}" destdir="${build}">
 	</javac>
   </target>
 
@@ -28,10 +21,8 @@
     <mkdir dir="${dist}/lib"/>
 	<jar jarfile="${dist}/lib/ONVIFTest-${DSTAMP}.jar"
 		 basedir="${build}">
-	  <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
       <manifest>
-        <attribute name="Main-Class" value="us.mn.state.dot.tms.server.comm.onvifptz.lib.ONVIFTest"/>
-		<attribute name="Class-Path" value="${classpath}"/>
+        <attribute name="Main-Class" value="us.mn.state.dot.tms.server.comm.onvifptz.ONVIFTest"/>
       </manifest>
     </jar>
   </target>
