@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2023  Minnesota Department of Transportation
+ * Copyright (C) 2016-2024  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
  */
 package us.mn.state.dot.tms.server.comm.onvifptz;
 
+import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -38,7 +39,7 @@ public class ImagingService extends Service {
 	/** Document builder function for GetOptions */
 	public Document getOptionsDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element getOptions = doc.createElement("wsdl:GetOptions");
 		body.appendChild(getOptions);
@@ -55,7 +56,7 @@ public class ImagingService extends Service {
 	 *
 	 * @param vToken reference token to the relevant video source
 	 */
-	public String getOptions(String vToken) {
+	public String getOptions(String vToken) throws IOException {
 		Document doc = getOptionsDocument(vToken);
 		return sendRequestDocument(doc);
 	}
@@ -63,7 +64,7 @@ public class ImagingService extends Service {
 	/** Document builder function for GetImagingSettings */
 	public Document getImagingSettingsDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element getImagingSettings = doc.createElement("wsdl:GetImagingSettings");
 		body.appendChild(getImagingSettings);
@@ -80,7 +81,7 @@ public class ImagingService extends Service {
 	 *
 	 * @param vToken reference token to the relevant video source
 	 */
-	public String getImagingSettings(String vToken) {
+	public String getImagingSettings(String vToken) throws IOException {
 		Document doc = getImagingSettingsDocument(vToken);
 		return sendRequestDocument(doc);
 	}
@@ -91,7 +92,7 @@ public class ImagingService extends Service {
 	 */
 	public Document setImagingSettingsDocument(String vToken, String setting, String value) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element setImagingSettings = doc.createElement("wsdl:SetImagingSettings");
 		body.appendChild(setImagingSettings);
@@ -159,7 +160,7 @@ public class ImagingService extends Service {
 	 * @param vToken reference token to the relevant video source
 	 * @param value  value to set focus mode; "auto" or "manual"
 	 */
-	public String setFocus(String vToken, String value) {
+	public String setFocus(String vToken, String value) throws IOException {
 		Document doc = setImagingSettingsDocument(vToken, "focus", value);
 		return sendRequestDocument(doc);
 	}
@@ -170,7 +171,7 @@ public class ImagingService extends Service {
 	 * @param vToken reference token to the relevant video source
 	 * @param value  the requested iris attenuation; "auto", "manual", or a float
 	 */
-	public String setIris(String vToken, String value) {
+	public String setIris(String vToken, String value) throws IOException {
 		Document doc = setImagingSettingsDocument(vToken, "iris", value);
 		return sendRequestDocument(doc);
 	}
@@ -182,12 +183,12 @@ public class ImagingService extends Service {
 	 *
 	 * @return float value of iris
 	 */
-	public float getIris(String vToken) {
+	public float getIris(String vToken) throws IOException {
 		String docString = getImagingSettings(vToken);
 		Document doc = DOMUtils.getDocument(docString);
 		if (doc == null) return 0;
 
-		Element iris = (Element) doc.getElementsByTagName("tt:Iris").item(0);
+		Element iris = (Element) doc.getElementsByTagNameNS("*", "Iris").item(0);
 		return Float.parseFloat(iris.getTextContent());
 	}
 
@@ -197,7 +198,9 @@ public class ImagingService extends Service {
 	 * @param vToken reference token to the relevant video source
 	 * @param value  the requested iris attenuation; "auto", "manual", or a float
 	 */
-	public String incrementIris(String vToken, String value) {
+	public String incrementIris(String vToken, String value)
+		throws IOException
+	{
 		float newIris = getIris(vToken) + Float.parseFloat(value);
 		return setIris(vToken, String.valueOf(newIris));
 	}
@@ -205,7 +208,7 @@ public class ImagingService extends Service {
 	/** Document builder function for GetMoveOptions */
 	public Document getMoveOptionsDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element getMoveOptions = doc.createElement("wsdl:GetMoveOptions");
 		body.appendChild(getMoveOptions);
@@ -222,7 +225,7 @@ public class ImagingService extends Service {
 	 *
 	 * @param vToken reference token to the relevant video source
 	 */
-	public String getMoveOptions(String vToken) {
+	public String getMoveOptions(String vToken) throws IOException {
 		Document doc = getMoveOptionsDocument(vToken);
 		return sendRequestDocument(doc);
 	}
@@ -230,7 +233,7 @@ public class ImagingService extends Service {
 	/** Document builder function for Move request; takes move mode as a parameter. */
 	public Document getMoveDocument(String vToken, float distance, String mode) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element moveElement = doc.createElement("wsdl:Move");
 		body.appendChild(moveElement);
@@ -280,7 +283,9 @@ public class ImagingService extends Service {
 	 * @param distance the requested move distance
 	 * @param mode     mode to send to device ("continuous", "absolute", "relative")
 	 */
-	public String moveFocus(String vToken, float distance, String mode) {
+	public String moveFocus(String vToken, float distance, String mode)
+		throws IOException
+	{
 		Document doc = getMoveDocument(vToken, distance, mode);
 		return sendRequestDocument(doc);
 	}
@@ -291,14 +296,16 @@ public class ImagingService extends Service {
 	 * @param vToken   reference token to the relevant video source
 	 * @param distance the requested move distance
 	 */
-	public String moveFocus(String vToken, float distance) {
+	public String moveFocus(String vToken, float distance)
+		throws IOException
+	{
 		return moveFocus(vToken, distance, "continuous");
 	}
 
 	/** Document builder function for GetStatus */
 	public Document getStatusDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element getStatusElement = doc.createElement("wsdl:GetStatus");
 		body.appendChild(getStatusElement);
@@ -315,7 +322,7 @@ public class ImagingService extends Service {
 	 *
 	 * @param vToken reference token to the relevant video source
 	 */
-	public String getStatus(String vToken) {
+	public String getStatus(String vToken) throws IOException {
 		Document doc = getStatusDocument(vToken);
 		return sendRequestDocument(doc);
 	}
@@ -323,7 +330,7 @@ public class ImagingService extends Service {
 	/** Document builder function for Stop */
 	public Document getStopDocument(String vToken) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element stopElement = doc.createElement("wsdl:Stop");
 		body.appendChild(stopElement);
@@ -340,7 +347,7 @@ public class ImagingService extends Service {
 	 *
 	 * @param vToken reference token to the relevant video source
 	 */
-	public String stop(String vToken) {
+	public String stop(String vToken) throws IOException {
 		Document doc = getStopDocument(vToken);
 		return sendRequestDocument(doc);
 	}

@@ -54,13 +54,13 @@ public class ONVIFTest {
 
 		DeviceService deviceService = DeviceService.getDeviceService(
 			"http://" + url + "/onvif/device_service", username, password);
-		System.out.println(deviceService.getPTZBinding());
+		String services = deviceService.getServices();
 		MediaService mediaService = MediaService.getMediaService(
-			deviceService.getMediaBinding(), username, password);
+			deviceService.getMediaBinding(services), username, password);
 		PTZService ptzService = PTZService.getPTZService(
-			deviceService.getPTZBinding(), username, password);
+			deviceService.getPTZBinding(services), username, password);
 		ImagingService imagingService = ImagingService.getImagingService(
-			deviceService.getImagingBinding(), username, password);
+			deviceService.getImagingBinding(services), username, password);
 		//MediaService mediaService = MediaService.getMediaService(
 		//	"http://" + url + "/onvif/device_service", username, password);
 		//PTZService ptzService = PTZService.getPTZService(

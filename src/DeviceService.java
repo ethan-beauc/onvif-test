@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2023  Minnesota Department of Transportation
+ * Copyright (C) 2016-2024  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
  */
 package us.mn.state.dot.tms.server.comm.onvifptz;
 
+import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Document;
@@ -39,30 +40,28 @@ public class DeviceService extends Service {
 	/** Document builder function for GetServices */
 	public Document getServicesDocument() {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element getServices = doc.createElement("wsdl:GetServices");
 		body.appendChild(getServices);
-
-		//Element includeCapability = doc.createElement("wsdl:IncludeCapability");
-		//getServices.appendChild(includeCapability);
-		//includeCapability.appendChild(doc.createTextNode("true"));
 
 		return doc;
 	}
 
 	/** Get information about services on the device, including service capabilities */
-	public String getServices() {
+	public String getServices() throws IOException {
 		Document doc = getServicesDocument();
 		return sendRequestDocument(doc);
 	}
 
 	/** Gets a service address by its namespace */
-	public String getServiceAddr(String namespace) {
-		String servicesRes = getServices();
-		System.out.println("Services response:\n" + servicesRes);
+	public String getServiceAddr(String namespace, String servicesRes)
+		throws IOException
+	{
+		if (servicesRes == null || servicesRes.isEmpty()) {
+			servicesRes = getServices();
+		}
 		Document servicesDoc = DOMUtils.getDocument(servicesRes);
-
 		if (servicesDoc == null) return null;
 
 		NodeList services = servicesDoc.getElementsByTagNameNS("*", "Service");
@@ -79,24 +78,24 @@ public class DeviceService extends Service {
 	}
 
 	/** Get the PTZ binding address */
-	public String getPTZBinding() {
-		return getServiceAddr("http://www.onvif.org/ver20/ptz/wsdl");
+	public String getPTZBinding(String services) throws IOException {
+		return getServiceAddr("http://www.onvif.org/ver20/ptz/wsdl", services);
 	}
 
 	/** Get the media binding address */
-	public String getMediaBinding() {
-		return getServiceAddr("http://www.onvif.org/ver10/media/wsdl");
+	public String getMediaBinding(String services) throws IOException {
+		return getServiceAddr("http://www.onvif.org/ver10/media/wsdl", services);
 	}
 
 	/** Get the imaging binding address */
-	public String getImagingBinding() {
-		return getServiceAddr("http://www.onvif.org/ver20/imaging/wsdl");
+	public String getImagingBinding(String services) throws IOException {
+		return getServiceAddr("http://www.onvif.org/ver20/imaging/wsdl", services);
 	}
 
 	/** Document builder function for GetScopes */
 	public Document getScopesDocument() {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element getScopes = doc.createElement("wsdl:GetScopes");
 		body.appendChild(getScopes);
@@ -105,7 +104,7 @@ public class DeviceService extends Service {
 	}
 
 	/** Get the scope parameters of the device */
-	public String getScopes() {
+	public String getScopes() throws IOException {
 		Document doc = getScopesDocument();
 		return sendRequestDocument(doc);
 	}
@@ -113,7 +112,7 @@ public class DeviceService extends Service {
 	/** Document builder function for GetServiceCapabilities */
 	public Document getServiceCapabilitiesDocument() {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element getServiceCapabilities = doc.createElement("wsdl:GetServiceCapabilities");
 		body.appendChild(getServiceCapabilities);
@@ -122,7 +121,7 @@ public class DeviceService extends Service {
 	}
 
 	/** Get the capabilities of the device service */
-	public String getServiceCapabilities() {
+	public String getServiceCapabilities() throws IOException {
 		Document doc = getServiceCapabilitiesDocument();
 		return sendRequestDocument(doc);
 	}
@@ -130,7 +129,7 @@ public class DeviceService extends Service {
 	/** Document builder function for SendAuxiliaryCommand */
 	public Document getAuxiliaryCommandDocument(String command, String state) {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element sendAuxiliaryCommand = doc.createElement("wsdl:SendAuxiliaryCommand");
 		body.appendChild(sendAuxiliaryCommand);
@@ -144,7 +143,7 @@ public class DeviceService extends Service {
 
 	public Document getSystemRebootDocument() {
 		Document doc = getBaseDocument();
-		Element body = (Element) doc.getElementsByTagName("s:Body").item(0);
+		Element body = (Element) doc.getElementsByTagName("SOAP-ENV:Body").item(0);
 
 		Element systemRebootElem = doc.createElement("wsdl:SystemReboot");
 		body.appendChild(systemRebootElem);
@@ -153,7 +152,7 @@ public class DeviceService extends Service {
 	}
 
 	/** Reboots the device */
-	public String systemReboot() {
+	public String systemReboot() throws IOException {
 		Document doc = getSystemRebootDocument();
 		return sendRequestDocument(doc);
 	}
