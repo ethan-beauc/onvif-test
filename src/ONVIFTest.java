@@ -54,13 +54,20 @@ public class ONVIFTest {
 
 		DeviceService deviceService = DeviceService.getDeviceService(
 			"http://" + url + "/onvif/device_service", username, password);
-		String services = deviceService.getServices();
+		//String services = deviceService.getServices();
+		//MediaService mediaService = MediaService.getMediaService(
+		//	deviceService.getMediaBinding(services), username, password);
+		//PTZService ptzService = PTZService.getPTZService(
+		//	deviceService.getPTZBinding(services), username, password);
+		//ImagingService imagingService = ImagingService.getImagingService(
+		//	deviceService.getImagingBinding(services), username, password);
+		String capabilities = deviceService.getCapabilities();
 		MediaService mediaService = MediaService.getMediaService(
-			deviceService.getMediaBinding(services), username, password);
+			deviceService.getMediaBinding(capabilities), username, password);
 		PTZService ptzService = PTZService.getPTZService(
-			deviceService.getPTZBinding(services), username, password);
+			deviceService.getPTZBinding(capabilities), username, password);
 		ImagingService imagingService = ImagingService.getImagingService(
-			deviceService.getImagingBinding(services), username, password);
+			deviceService.getImagingBinding(capabilities), username, password);
 		//MediaService mediaService = MediaService.getMediaService(
 		//	"http://" + url + "/onvif/device_service", username, password);
 		//PTZService ptzService = PTZService.getPTZService(
@@ -116,7 +123,7 @@ public class ONVIFTest {
 
 		String userCommand = "";
 		String resp = "";
-		while (!"exit".equals(userCommand = c.readLine("Enter a command <exit|ptzconfigs|ptzconfigoptions|services|moveoptions|scopes|profiles|con x y z|rel x y z|stop|configurefocus s|focus f|relf f|stopf|getfocus|iris f|isettings|wiper On|Off|setpreset i|gotopreset i|getpresets>: "))) {
+		while (!"exit".equals(userCommand = c.readLine("Enter a command <exit|ptzconfigs|ptzconfigoptions|services|capabilities|moveoptions|scopes|profiles|con x y z|rel x y z|stop|configurefocus s|focus f|relf f|stopf|getfocus|iris f|isettings|wiper On|Off|setpreset i|gotopreset i|getpresets>: "))) {
 			String[] cmd = userCommand.split(" ");
 			if (cmd.length == 0) continue;
 			switch (cmd[0]) {
@@ -210,6 +217,9 @@ public class ONVIFTest {
 					break;
 				case "services":
 					resp = deviceService.getServices();
+					break;
+				case "capabilities":
+					resp = deviceService.getCapabilities();
 					break;
 				case "wiper":
 					if (cmd.length == 2)

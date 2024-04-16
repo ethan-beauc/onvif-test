@@ -72,6 +72,7 @@ public class DOMUtils {
 		catch (ParserConfigurationException | SAXException e) {
 			System.out.println("DOMUtils.getDocument: " +
 				e.getMessage());
+			System.out.println("DOMUtils.getDocument String: " + s);
 			return null;
 		}
 
