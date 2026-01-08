@@ -48,13 +48,17 @@ import org.w3c.dom.Element;
  */
 public abstract class Service {
 	protected String endpoint;
-	protected String namespace;
 	protected String username;
 	protected String password;
+	protected String WSDL;
+	protected final String SOAP = "http://www.w3.org/2003/05/soap-envelope";
+	protected final String TT = "http://www.onvif.org/ver10/schema";
+	protected final String WSSE = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
+	protected final String WSU = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
 
 	/** Logger method */
 	protected void log(String s) {
-		System.out.println("PTZCommandProp:" + s);
+		System.out.println("Service:" + s);
 	}
 
 	/**
@@ -63,6 +67,7 @@ public abstract class Service {
 	 */
 	protected Document getBaseDocument() {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		dbf.setNamespaceAware(true);
 		DocumentBuilder db;
 		try {
 			db = dbf.newDocumentBuilder();
@@ -71,16 +76,17 @@ public abstract class Service {
 			return null;
 		}
 
+		db.setErrorHandler(new DOMUtils.OnvifErrorHandler("New base document"));
 		Document d = db.newDocument();
 		d.setXmlStandalone(true);
-		Element envelope = d.createElementNS("http://www.w3.org/2003/05/soap-envelope", "SOAP-ENV:Envelope");
-		envelope.setAttribute("xmlns:wsdl", namespace);
-		envelope.setAttribute("xmlns:tt", "http://www.onvif.org/ver10/schema");
+		Element envelope = d.createElementNS(SOAP, "s:Envelope");
 		d.appendChild(envelope);
-		Element header = d.createElement("SOAP-ENV:Header");
+		Element header = d.createElementNS(SOAP, "s:Header");
 		envelope.appendChild(header);
 
-		Element body = d.createElement("SOAP-ENV:Body");
+		Element body = d.createElementNS(SOAP, "s:Body");
+		body.setAttribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
+		body.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
 		envelope.appendChild(body);
 
 		return d;
@@ -101,7 +107,7 @@ public abstract class Service {
 
 	/** Returns the current UTC time for use in password digest */
 	private static String getUTCTime() {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(new Date());
 	}
@@ -112,31 +118,29 @@ public abstract class Service {
 	 * @param doc the document for which to add headers
 	 */
 	protected Document addSecurityHeaderDocument(Document doc) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		Element env = (Element) doc.getElementsByTagName("SOAP-ENV:Envelope").item(0);
-		env.setAttribute("xmlns:wsse",
-			"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd");
-		env.setAttribute("xmlns:wsu",
-			"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd");
-
-		Element head = (Element) env.getElementsByTagName("SOAP-ENV:Header").item(0);
-		Element sec = doc.createElement("wsse:Security");
+		Element env = (Element) doc.getElementsByTagNameNS(SOAP, "Envelope").item(0);
+		Element head = (Element) env.getElementsByTagNameNS(SOAP, "Header").item(0);
+		Element sec = doc.createElementNS(WSSE, "Security");
+		sec.setAttributeNS(SOAP, "s:mustUnderstand", "1");
 		head.appendChild(sec);
-		Element usernameToken = doc.createElement("wsse:UsernameToken");
+		Element usernameToken = doc.createElement("UsernameToken");
 		sec.appendChild(usernameToken);
-		Element usernameElement = doc.createElement("wsse:Username");
+		Element usernameElement = doc.createElement("Username");
 		usernameElement.appendChild(doc.createTextNode(username));
 		usernameToken.appendChild(usernameElement);
-		Element passwordElement = doc.createElement("wsse:Password");
+		Element passwordElement = doc.createElement("Password");
 		usernameToken.appendChild(passwordElement);
-		Element nonce = doc.createElement("wsse:Nonce");
+		Element nonce = doc.createElement("Nonce");
 		usernameToken.appendChild(nonce);
-		Element created = doc.createElement("wsu:Created");
+		Element created = doc.createElementNS(WSU, "Created");
 		usernameToken.appendChild(created);
 
 		// Generate and encode nonce, inserting it into the Nonce element
 		Base64.Encoder e = Base64.getEncoder();
-		byte[] nonceBinaryData = getNonce().getBytes("UTF-8");
+		String n = getNonce();
+		byte[] nonceBinaryData = n.getBytes("UTF-8");
 		String nonceBase64 = e.encodeToString(nonceBinaryData);
+		nonce.setAttribute("EncodingType", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary");
 		nonce.appendChild(doc.createTextNode(nonceBase64));
 
 		// Get the date and save it into the Created element
@@ -188,8 +192,10 @@ public abstract class Service {
 		}
 
 		String soapRequest = DOMUtils.getString(doc);
+		log("\nsoapRequest:\n" + soapRequest);
 		if (soapRequest == null) return "Could not convert document to string";
 		log("\nSending soapRequest to " + endpoint + ":\n" + soapRequest);
+		//log("\nSending soapRequest...");
 
 		try (OutputStream os = connection.getOutputStream()) {
 			byte[] input = soapRequest.getBytes("utf-8");
@@ -198,14 +204,19 @@ public abstract class Service {
 
 		int responseCode = connection.getResponseCode();
 		if (responseCode == HttpURLConnection.HTTP_OK) {
-			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			InputStream is = connection.getInputStream();
+			if (is == null) return "HTTP_OK: " + responseCode + "; error reading stream";
+			BufferedReader in = new BufferedReader(new InputStreamReader(is));
 			resp = in.lines().collect(Collectors.joining("\n"));
-			System.out.println("Request succeeded, code: " + responseCode + " Response:\n" + resp);
 			in.close();
 		} else {
-			BufferedReader err = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-			resp = "Request failed. Response code: " + responseCode + " Response:\n"
-				+ err.lines().collect(Collectors.joining("\n"));
+			log("Request failed. Response code: " + responseCode);
+
+			InputStream is = connection.getErrorStream();
+			if (is == null) return "HTTP error: " + responseCode + "; error reading stream";
+
+			BufferedReader err = new BufferedReader(new InputStreamReader(is));
+			resp = err.lines().collect(Collectors.joining("\n"));
 			err.close();
 		}
 

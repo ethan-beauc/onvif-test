@@ -2,32 +2,35 @@
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2016-2024  Minnesota Department of Transportation
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software;  you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation;  either version 2 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-package us.mn.state.dot.tms.server.comm.onvifptz;
+package us.mn.state.dot.tms.server.comm.onvifptz;  
 
-import java.io.*;
+import java.io.*;  
+import java.util.*;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.*;
-import javax.xml.transform.stream.*;
+import javax.xml.parsers.DocumentBuilder;  
+import javax.xml.parsers.DocumentBuilderFactory;  
+import javax.xml.parsers.ParserConfigurationException;  
+import javax.xml.transform.*;  
+import javax.xml.transform.dom.*;  
+import javax.xml.transform.stream.*;  
+import javax.xml.XMLConstants;
 
-import org.w3c.dom.Node;
-import org.w3c.dom.Document;
+import org.w3c.dom.*;  
 
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import org.xml.sax.InputSource;  
+import org.xml.sax.SAXException;  
+import org.xml.sax.SAXParseException;  
+import org.xml.sax.ErrorHandler;  
 
 /**
  * Class for XML document utilities
@@ -35,12 +38,43 @@ import org.xml.sax.SAXException;
  * @author Ethan Beauclaire
  */
 public class DOMUtils {
+
 	/** don't allow instantiation */
 	private DOMUtils() {}
 
+	static class OnvifErrorHandler implements ErrorHandler {
+		private String messageString;  
+
+		public OnvifErrorHandler(String msg) {
+			super();  
+			messageString = msg;  
+		}
+
+		@Override
+		public void warning(SAXParseException e) {
+			System.out.println("DOMUtils.OEH Warning: " +
+				e.getMessage());  
+			System.out.println("XML String:\n" + messageString);  
+		}
+
+		@Override
+		public void error(SAXParseException e) {
+			System.out.println("DOMUtils.OEH Error: " +
+				e.getMessage());  
+			System.out.println("XML String:\n" + messageString);  
+		}
+
+		@Override
+		public void fatalError(SAXParseException e) {
+			System.out.println("DOMUtils.OEH FatalError: " +
+				e.getMessage());  
+			System.out.println("XML String:\n" + messageString);  
+		}
+	}
+
 	/** Converts the Node to a string and returns it */
 	public static String getString(Node n) {
-		if (n == null) return null;
+		if (n == null) return null;  
 
 		try {
 			StringWriter w = new StringWriter();
@@ -56,26 +90,31 @@ public class DOMUtils {
 		return null;
 	}
 
+	/** Prints a Node */
+	public static void printNode(Node n) {
+		System.out.println(getString(n));
+	}
+
 	/** Gets Document from string */
 	public static Document getDocument(String s) throws IOException {
-		if (s == null) return null;
+		if (s == null) return null;  
 
-		Document doc = null;
+		Document doc = null;  
 		try {
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			dbf.setNamespaceAware(true);
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			InputSource is = new InputSource();
-			is.setCharacterStream(new StringReader(s));
-			doc = db.parse(is);
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();  
+			dbf.setNamespaceAware(true);  
+			DocumentBuilder db = dbf.newDocumentBuilder();  
+			db.setErrorHandler(new OnvifErrorHandler(s));  
+			InputSource is = new InputSource();  
+			is.setCharacterStream(new StringReader(s));  
+			doc = db.parse(is);  
 		}
 		catch (ParserConfigurationException | SAXException e) {
 			System.out.println("DOMUtils.getDocument: " +
-				e.getMessage());
-			System.out.println("DOMUtils.getDocument String: " + s);
-			return null;
+				e.getMessage());  
+			return null;  
 		}
 
-		return doc;
+		return doc;  
 	}
 }

@@ -62,6 +62,7 @@ public class ONVIFTest {
 		//ImagingService imagingService = ImagingService.getImagingService(
 		//	deviceService.getImagingBinding(services), username, password);
 		String capabilities = deviceService.getCapabilities();
+		System.out.println("Capabilities: " + capabilities);
 		MediaService mediaService = MediaService.getMediaService(
 			deviceService.getMediaBinding(capabilities), username, password);
 		PTZService ptzService = PTZService.getPTZService(
@@ -130,7 +131,7 @@ public class ONVIFTest {
 				case "ptz":
 				case "con":
 					if (cmd.length == 4)
-						resp = ptzService.continuousMove(mediaProfile, Float.parseFloat(cmd[1]), Float.parseFloat(cmd[2]), Float.parseFloat(cmd[3]));
+						resp = ptzService.continuousMove(mediaProfile, cmd[1], cmd[2], cmd[3]);
 					else continue;
 					break;
 				case "rel":
